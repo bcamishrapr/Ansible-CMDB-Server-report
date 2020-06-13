@@ -1,0 +1,45 @@
+Step 1: docker pull centos:latest
+
+Step 2: docker run -it centos:latest
+Step 3: docker ps
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+4bda3cb9b2c4        centos:latest       "/bin/bash"         2 hours ago         Up 2 hours                              dazzling_pare
+Step 4: Login into docker container
+docker exec -it 4bda3cb9b2c4  /bin/bash
+
+Step 5 : Install following packages
+yum install vim , epel
+yum install ansible
+pip-3 install python
+pip-3  install ansible-cmdb
+yum install jq
+Step 6:create following subdirectories in /Final Directory
+mkdir /pot/setupdir /opt/servicefactdir /pot/portdir /opt/output /opt/template
+
+Step 7: Gather facts by setup module for all hosts
+ansible -m setup --user=org --become --ask-become-pass --tree setupdir/ all
+
+Step 8: Gather service_facts for all hosts
+ansible -m service_facts --user=org --become --ask-become-pass --tree servicedir/ all
+Step 9 :Gather ports_facts for all hosts
+ansible -m listen_ports_facts --user=org --become --ask-become-pass --tree portdir/ all
+
+Now we have seprate files for each hosts in each directory
+	Combine All fact individual host file in a single file by jq command in the output Directory
+
+jq -s '.[0] * .[1] * .[2]'  ../setupdir/192.168.122.215 ../servicedir/192.168.122.215 ../portdir/192.168.122.215  > ../output/192.168.122.215
+
+similarly run the jq command for other hosts or run a for loop
+We have our coustom template html_fancy_defs.html( which we have modified according to our need )in template Dir
+cd template
+Now run ansible-cmdb command to convert the individual host output file into html.
+ansible-cmdb -t html_fancy ../output/ > Finaloutput.html	
+
+
+ ansible -m service_facts --user=fino --become --ask-become-pass --tree servicedir/ all
+  ansible -m listen_ports_facts  --user=fino --become --ask-become-pass --tree portdir/ all
+  ansible -m setup --user=fino --become --ask-become-pass --tree setupdir/ all
+  
+  jq -s '.[0] * .[1] * .[2]' setupdir/server1 servicedir/server1 portdir/server1  >>  output/server1
+  
+  
